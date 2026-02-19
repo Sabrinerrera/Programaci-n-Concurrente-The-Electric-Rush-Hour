@@ -9,14 +9,23 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 class MonitorEstacionamiento {
-    private int[][] tablero = new int[6][6];
+    private char[][] tablero = new char[6][6];
     private List<Integer> vehiculosSinBateria = new ArrayList<>();
 
     public MonitorEstacionamiento() {
         for(int i = 0; i < 6; i++){
             for(int j = 0; j < 6; j++){
-                tablero[i][j] = -1;
+                tablero[i][j] = '_';
             }
+        }
+    }
+
+    public void imprimirTablero() {
+        for(int i = 0; i < 6; i++){
+            for(int j = 0; j < 6; j++){
+                System.out.print(tablero[i][j]);
+            }
+            System.out.println();
         }
     }
     
@@ -73,7 +82,7 @@ class MonitorEstacionamiento {
         int tempColumna = columna;
 
         for (int i=0; i<vehiculo.getLongitud(); i++) {
-            if(tablero[tempFila][tempColumna] != -1) return false; // solapamiento
+            if(tablero[tempFila][tempColumna] != '_') return false; // solapamiento
 
             if(vehiculo.getOrientacion() == Vehiculo.Orientacion.h) {
                 tempColumna++; 
@@ -84,7 +93,7 @@ class MonitorEstacionamiento {
 
         // ocupar casilla
         for (int i=0; i<vehiculo.getLongitud(); i++) {
-            tablero[fila][columna] = vehiculo.getVehiculoId(); // llenando el tablero con el ID del vehículo
+            tablero[fila][columna] = (char) ('0' + vehiculo.getVehiculoId()); // llenando el tablero con el ID del vehículo 🚧
 
             if(vehiculo.getOrientacion() == Vehiculo.Orientacion.h) {
                 columna++; 
@@ -95,10 +104,10 @@ class MonitorEstacionamiento {
         return true; 
     }
 
-    private void initialBoard(List<Vehiculo> iniciales) {
+    public void initialBoard(List<Vehiculo> iniciales) {
         for (Vehiculo vehiculo : iniciales) {
             if(!esVehiculoValido(vehiculo)) {
-                System.err.println("Vehiculo " + vehiculo.getVehiculoId() + " fuera de limites.");
+                System.err.println("Vehiculo " + vehiculo.getVehiculoId() + " fuera de limites."); //🚧
                 System.exit(1);
             }
 
@@ -166,13 +175,13 @@ class Cargador extends Thread {
         this.monitor = monitor;
 
         // PRUEBA: confirmar en consola que el cargador fue creado
-        System.out.println("[PRUEBA] Cargador creado: " + this.getName());
+        //System.out.println("[PRUEBA] Cargador creado: " + this.getName());
     }
 
     @Override
     public void run() {
         // PRUEBA: confirmar en consola que el hilo cargador inició
-        System.out.println("[PRUEBA] Cargador iniciado: " + this.getName());
+        //System.out.println("[PRUEBA] Cargador iniciado: " + this.getName());
     }
 
 }
@@ -199,7 +208,7 @@ class LectorVehiculos {
                 // Validar que la linea tenga exactamente 6 campos o es la linea cantidad de cargadores
                 if (tokens.length == 2 && tokens[0].equalsIgnoreCase("cargadores")) {
                     // PRUEBA: informar cuántos cargadores se van a crear
-                    System.out.println("[PRUEBA] Cantidad de cargadores a crear: " + tokens[1]);
+                    //System.out.println("[PRUEBA] Cantidad de cargadores a crear: " + tokens[1]);
 
                     // Si es un cargador, se crea un hilo por cada cargador y se inicia
                     for (int i = 0; i < Integer.parseInt(tokens[1]); i++) {
@@ -272,9 +281,14 @@ class RushHour {
         LectorVehiculos lector = new LectorVehiculos();
         List<Vehiculo> listaDeVehiculos = lector.leerArchivo(args[0], monitor);
 
-        for (Vehiculo v : listaDeVehiculos) {
-            System.out.println("Vehiculo ID: " + v.getVehiculoId() + ", Orientacion: " + v.getOrientacion() + ", Fila: " + v.getFila() + ", Columna: " + v.getColumna() + ", Longitud: " + v.getLongitud() + ", Bateria: " + v.getBateria());
-        }
+        // for (Vehiculo v : listaDeVehiculos) {
+        //     System.out.println("Vehiculo ID: " + v.getVehiculoId() + ", Orientacion: " + v.getOrientacion() + ", Fila: " + v.getFila() + ", Columna: " + v.getColumna() + ", Longitud: " + v.getLongitud() + ", Bateria: " + v.getBateria());
+        // }
+
+
+        monitor.initialBoard(listaDeVehiculos);
+        monitor.imprimirTablero();
+
 
         // 3. Inyectar la lista de vehículos de vuelta al monitor 
         // para que este pueda llenar la matriz y saber dónde está cada uno
