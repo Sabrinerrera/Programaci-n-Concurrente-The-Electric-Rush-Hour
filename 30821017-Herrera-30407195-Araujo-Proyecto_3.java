@@ -164,6 +164,15 @@ class Cargador extends Thread {
     // Constructor
     public Cargador(MonitorEstacionamiento monitor) {
         this.monitor = monitor;
+
+        // PRUEBA: confirmar en consola que el cargador fue creado
+        System.out.println("[PRUEBA] Cargador creado: " + this.getName());
+    }
+
+    @Override
+    public void run() {
+        // PRUEBA: confirmar en consola que el hilo cargador inició
+        System.out.println("[PRUEBA] Cargador iniciado: " + this.getName());
     }
 
 }
@@ -185,10 +194,21 @@ class LectorVehiculos {
                 if (linea.isEmpty()) continue;
 
                 // Tokenizacion por uno o mas espacios en blanco
-                String[] tokens = linea.split("\\s+");
+                String[] tokens = linea.split("\\s*,\\s*");
 
-                // Validar que la linea tenga exactamente 6 campos
-                if (tokens.length != 6) {
+                // Validar que la linea tenga exactamente 6 campos o es la linea cantidad de cargadores
+                if (tokens.length == 2 && tokens[0].equalsIgnoreCase("cargadores")) {
+                    // PRUEBA: informar cuántos cargadores se van a crear
+                    System.out.println("[PRUEBA] Cantidad de cargadores a crear: " + tokens[1]);
+
+                    // Si es un cargador, se crea un hilo por cada cargador y se inicia
+                    for (int i = 0; i < Integer.parseInt(tokens[1]); i++) {
+                        Cargador cargador = new Cargador(monitor);
+                        cargador.start();
+                    }
+                    return listaVehiculos; // No se esperan mas vehiculos despues de la linea de cargadores
+                }
+                else if (tokens.length != 6) {
                     System.err.println("Error en linea " + numeroLinea + ": Formato incorrecto (se esperan 6 datos).");
                     System.exit(1);
                 }
@@ -207,10 +227,10 @@ class LectorVehiculos {
                     if (fila < 0 || fila > 5 || columna < 0 || columna > 5) {
                         throw new IllegalArgumentException("Coordenadas fuera de rango (0-5).");
                     }
-                    if (orientacion == 'h' && ((columna + longitud)-1) > 6) {
+                    if (orientacion == 'h' && ((columna + longitud)-1) > 5) {
                         throw new IllegalArgumentException("El vehiculo se sale del tablero horizontalmente.");
                     }
-                    if (orientacion == 'v' && ((fila + longitud)-1) > 6) {
+                    if (orientacion == 'v' && ((fila + longitud)-1) > 5) {
                         throw new IllegalArgumentException("El vehiculo se sale del tablero verticalmente.");
                     }
 
@@ -241,3 +261,34 @@ class LectorVehiculos {
         return listaVehiculos;
     }
 }
+
+class RushHour {
+    public static void main(String[] args) {
+        // 1. Crear el Monitor vacío
+        MonitorEstacionamiento monitor = new MonitorEstacionamiento();
+
+        // 2. Leer el archivo y crear los hilos de los vehículos 
+        // pasándoles la referencia del monitor que acabamos de crear
+        LectorVehiculos lector = new LectorVehiculos();
+        List<Vehiculo> listaDeVehiculos = lector.leerArchivo(args[0], monitor);
+
+        for (Vehiculo v : listaDeVehiculos) {
+            System.out.println("Vehiculo ID: " + v.getVehiculoId() + ", Orientacion: " + v.getOrientacion() + ", Fila: " + v.getFila() + ", Columna: " + v.getColumna() + ", Longitud: " + v.getLongitud() + ", Bateria: " + v.getBateria());
+        }
+
+        // 3. Inyectar la lista de vehículos de vuelta al monitor 
+        // para que este pueda llenar la matriz y saber dónde está cada uno
+        // monitor.setVehiculos(listaDeVehiculos);
+
+        // 4. Ahora que todos se conocen, inicias los hilos
+        // for (Vehiculo v : listaDeVehiculos) {
+        //     v.start();
+        // }
+    }
+}
+
+// para correr el programa, se debe pasar la ruta del archivo de texto como argumento
+// java RushHour ruta_del_archivo.txt
+// ejemplo de comando para compilar y correr el programa
+// javac 30821017-Herrera-30407195-Araujo-Proyecto_3.java
+// java RushHour pruebas.txt
