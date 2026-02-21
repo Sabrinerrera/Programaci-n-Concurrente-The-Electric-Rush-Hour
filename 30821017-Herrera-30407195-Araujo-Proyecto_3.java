@@ -11,6 +11,8 @@ import java.util.Scanner;
 class MonitorEstacionamiento {
     private char[][] tablero = new char[6][6];
     private List<Integer> vehiculosSinBateria = new ArrayList<>();
+    private List<Vehiculo> todosLosVehiculos = new ArrayList<>();
+    private boolean simulacionTerminada = false;
 
     public MonitorEstacionamiento() {
         for(int i = 0; i < 6; i++){
@@ -29,22 +31,60 @@ class MonitorEstacionamiento {
         }
     }
     
-
     // Funciones sincronizadas
     public synchronized void moverVehiculo(int id, int nuevaFila, int nuevaColumna) {
         // Metodo MoveVehicle: Mueve un vehiculo a una nueva posicion
     }
 
     public synchronized void reportarSinBateria(int id) {
-        // Metodo ReportNoBattery: Agrega el ID del vehiculo a la lista de varados
+        // Agrega el ID del vehiculo a la lista de varados
+        if (!vehiculosSinBateria.contains(id)) {
+            // NOTA: la prioridad de recarga la tiene el ID 0
+            if (id == 0) {
+                vehiculosSinBateria.add(0, id); 
+            }
+            else {
+                vehiculosSinBateria.add(id);
+            }
+
+            System.out.println("Vehiculo " + id + " reportado sin bateria.");
+            notifyAll();
+        }
     }
 
-    public synchronized void atenderSinBateria() {
-        // Metodo AttendNoBattery: Atiende a los vehiculos varados y los recarga
+    public synchronized int atenderSinBateria() throws InterruptedException {
+        // Atiende a los vehiculos varados y los recarga
+        while(vehiculosSinBateria.isEmpty()) {
+            wait(); // esperar hasta que haya un vehiculo sin bateria
+        }
+        return vehiculosSinBateria.remove(0); // retornar el ID del vehiculo que se va a recargar (el primero)
     }
 
     public synchronized void recargaCompleta(int id) {
-        // Metodo RechargeComplete: Elimina el ID del vehiculo de la lista de los sin bateria 
+        // Elimina el ID del vehiculo de la lista de los sin bateria 
+        for (Vehiculo vehiculo : todosLosVehiculos) {
+            if (vehiculo.getVehiculoId() == id) {
+                vehiculo.setBateria(10); // definimos 10 como la bateria maxima 
+                break;
+            }
+        }
+        notifyAll();
+    }
+
+    public synchronized void esperarRecarga(int id) throws InterruptedException {
+        // Vehiculos se bloquea a si mismo hasta que su bateria sea recargada
+        reportarSinBateria(id);
+
+        Vehiculo vehiculoActual = null;
+        for (Vehiculo vehiculo : todosLosVehiculos) {
+            if(vehiculo.getVehiculoId() == id) {
+                vehiculoActual = vehiculo;
+            }
+        }    
+        
+        while (vehiculoActual != null && vehiculoActual.getBateria() == 0) {
+            wait(); 
+        }
     }
 
 
@@ -93,7 +133,7 @@ class MonitorEstacionamiento {
 
         // ocupar casilla
         for (int i=0; i<vehiculo.getLongitud(); i++) {
-            tablero[fila][columna] = (char) ('0' + vehiculo.getVehiculoId()); // llenando el tablero con el ID del vehículo 🚧
+            tablero[fila][columna] = (char) ('0' + vehiculo.getVehiculoId()); // llenando el tablero con el ID del vehiculo 🚧
 
             if(vehiculo.getOrientacion() == Vehiculo.Orientacion.h) {
                 columna++; 
@@ -104,8 +144,8 @@ class MonitorEstacionamiento {
         return true; 
     }
 
-    public void initialBoard(List<Vehiculo> iniciales) {
-        for (Vehiculo vehiculo : iniciales) {
+    public void initialBoard() {
+        for (Vehiculo vehiculo : todosLosVehiculos) {
             if(!esVehiculoValido(vehiculo)) {
                 System.err.println("Vehiculo " + vehiculo.getVehiculoId() + " fuera de limites."); //🚧
                 System.exit(1);
@@ -116,6 +156,32 @@ class MonitorEstacionamiento {
                 System.exit(1);
             }
         }
+    }
+
+    // getters y setters
+
+    public boolean getSimulacionTerminada() {
+        return this.simulacionTerminada;
+    }
+
+    public List<Integer> getListaSinBateria() {
+        return this.vehiculosSinBateria;
+    }
+
+    public List<Vehiculo> getListaVehiculos() {
+        return this.todosLosVehiculos;
+    }
+
+    public void setSimulacionTerminada(boolean estado) {
+        this.simulacionTerminada = estado;
+    }
+
+    public void setListaSinBAteria(List<Integer> listaSinBateria) {
+        this.vehiculosSinBateria = listaSinBateria;
+    }
+
+    public void setListaVehiculos(List<Vehiculo> listaVehiculos) {
+        this.todosLosVehiculos = listaVehiculos;
     }
 
 }    
@@ -141,6 +207,25 @@ class Vehiculo extends Thread {
         this.bateria = bateria;
         this.monitor = monitor;
     }
+
+    @Override
+    public void run() {
+        while (!monitor.getSimulacionTerminada()) {
+            try {
+                if (this.bateria > 0) {
+                    // Logica de movimiento del vehiculo
+                }
+                else {
+                    System.out.println("Vehiculo " + id + " sin bateria. Esperando carga...");
+                    monitor.esperarRecarga(this.id);
+                    System.out.println("Vehiculo " + id + " recargado. Reanudando movimiento...");
+                }
+            } catch (Exception e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    }
     
     public int getVehiculoId(){
         return this.id;
@@ -165,6 +250,10 @@ class Vehiculo extends Thread {
     public int getBateria(){
         return this.bateria;
     }
+
+    public void setBateria(int recarga){
+        this.bateria = recarga;
+    }
 }
 
 class Cargador extends Thread {
@@ -180,6 +269,25 @@ class Cargador extends Thread {
 
     @Override
     public void run() {
+        while (!monitor.getSimulacionTerminada()) {
+            try {
+                int idVarado = monitor.atenderSinBateria(); // si la lista esta vacia, se bloquea el hilo hasta que se llene
+                
+                if (idVarado == -1) break; // si se retorna -1, significa que la simulacion ha terminado
+
+                // NOTA: this.getName() es un metodo de Thread que retorna el nombre del hilo por defecto
+                
+                System.out.println("Cargador " + this.getName() + " atendiendo vehiculo " + idVarado);
+                Thread.sleep(10000); // simula el tiempo de recarga
+
+                monitor.recargaCompleta(idVarado);
+
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        System.out.println("Cargador " + this.getName() + " termino su ejecucion.");
         // PRUEBA: confirmar en consola que el hilo cargador inició
         //System.out.println("[PRUEBA] Cargador iniciado: " + this.getName());
     }
@@ -273,11 +381,11 @@ class LectorVehiculos {
 
 class RushHour {
     public static void main(String[] args) {
-        // 1. Crear el Monitor vacío
+        // 1. Crear el Monitor vacio
         MonitorEstacionamiento monitor = new MonitorEstacionamiento();
 
-        // 2. Leer el archivo y crear los hilos de los vehículos 
-        // pasándoles la referencia del monitor que acabamos de crear
+        // 2. Leer el archivo y crear los hilos de los vehiculos 
+        // pasandoles la referencia del monitor que acabamos de crear
         LectorVehiculos lector = new LectorVehiculos();
         List<Vehiculo> listaDeVehiculos = lector.leerArchivo(args[0], monitor);
 
@@ -285,19 +393,19 @@ class RushHour {
         //     System.out.println("Vehiculo ID: " + v.getVehiculoId() + ", Orientacion: " + v.getOrientacion() + ", Fila: " + v.getFila() + ", Columna: " + v.getColumna() + ", Longitud: " + v.getLongitud() + ", Bateria: " + v.getBateria());
         // }
 
-
-        monitor.initialBoard(listaDeVehiculos);
+        monitor.setListaVehiculos(listaDeVehiculos);
+        monitor.initialBoard();
         monitor.imprimirTablero();
 
 
-        // 3. Inyectar la lista de vehículos de vuelta al monitor 
-        // para que este pueda llenar la matriz y saber dónde está cada uno
+        // 3. Inyectar la lista de vehiculos de vuelta al monitor 
+        // para que este pueda llenar la matriz y saber donde esta cada uno
         // monitor.setVehiculos(listaDeVehiculos);
 
         // 4. Ahora que todos se conocen, inicias los hilos
-        // for (Vehiculo v : listaDeVehiculos) {
-        //     v.start();
-        // }
+        for (Vehiculo v : listaDeVehiculos) {
+            v.start();
+        }
     }
 }
 
