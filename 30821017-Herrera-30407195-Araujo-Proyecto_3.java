@@ -32,10 +32,78 @@ class MonitorEstacionamiento {
     }
     
     // Funciones sincronizadas
-    public synchronized void moverVehiculo(int id, int nuevaFila, int nuevaColumna) {
-        // Metodo MoveVehicle: Mueve un vehiculo a una nueva posicion
-    }
+    public synchronized boolean moverVehiculo(Vehiculo v, int direccion) throws InterruptedException {
+        if (this.simulacionTerminada) return false;
 
+        int filaActual = v.getFila();
+        int colActual = v.getColumna();
+        int longitud = v.getLongitud();
+
+        // 1. Calcular la casilla que se quiere OCUPAR (la nueva celda que pisará el vehículo)
+        int filaDestino = filaActual;
+        int colDestino = colActual;
+
+        if (v.getOrientacion() == Vehiculo.Orientacion.h) {
+            if (direccion == 1) colDestino = colActual + longitud; // Intenta mover a la derecha
+            else colDestino = colActual - 1; // Intenta mover a la izquierda
+        } else {
+            if (direccion == 1) filaDestino = filaActual + longitud; // Intenta mover abajo
+            else filaDestino = filaActual - 1; // Intenta mover arriba
+        }
+
+        // 2. Validar que la nueva casilla esté dentro del tablero
+        if (!estaEnTablero(filaDestino, colDestino)) {
+            return false;
+        }
+
+        // 3. Verificar si la casilla destino está libre
+        // IMPORTANTE: Quitamos el wait() de aquí. Si está ocupado, el hilo sale del monitor,
+        // hace yield() y vuelve a intentar luego. Esto evita que el monitor se bloquee.
+        if (!tablero[filaDestino][colDestino].equals("_")) {
+            return false; 
+        }
+
+        // 4. EJECUTAR EL MOVIMIENTO (Actualización de la matriz)
+        String idStr = String.valueOf(v.getVehiculoId());
+
+        if (v.getOrientacion() == Vehiculo.Orientacion.h) {
+            if (direccion == 1) {
+                tablero[filaActual][colActual] = "_"; // Borra la cola
+                tablero[filaActual][colDestino] = idStr; // Pinta la nueva cabeza
+                v.setColumna(colActual + 1);
+            } else {
+                tablero[filaActual][colActual + longitud - 1] = "_"; // Borra la cola
+                tablero[filaActual][colDestino] = idStr; // Pinta la nueva cabeza
+                v.setColumna(colActual - 1);
+            }
+        } else { // Vertical
+            if (direccion == 1) {
+                tablero[filaActual][colActual] = "_"; 
+                tablero[filaDestino][colActual] = idStr;
+                v.setFila(filaActual + 1);
+            } else {
+                tablero[filaActual + longitud - 1][colActual] = "_";
+                tablero[filaDestino][colActual] = idStr;
+                v.setFila(filaActual - 1);
+            }
+        }
+
+        // 5. Mostrar progreso
+        imprimirTablero();
+        System.out.println("Vehiculo " + v.getVehiculoId() + " se movio. Bateria: " + (v.getBateria() - 1));
+        System.out.println("-------------------------");
+
+        // 6. Verificar condición de salida (Vehículo 0 llega con su parte frontal a la col 5)
+        if (v.getVehiculoId() == 0 && (v.getColumna() + v.getLongitud() - 1) == 5) {
+            this.simulacionTerminada = true;
+            System.out.println("¡EL VEHICULO 0 HA SALIDO!");
+            notifyAll(); 
+        }
+
+        notifyAll(); // Despierta a otros (incluyendo cargadores o autos esperando)
+        return true;
+    }
+    
     public synchronized void reportarSinBateria(int id) {
         // Agrega el ID del vehiculo a la lista de varados
         if (!vehiculosSinBateria.contains(id)) {
@@ -52,12 +120,24 @@ class MonitorEstacionamiento {
         }
     }
 
+    // public synchronized int atenderSinBateria() throws InterruptedException {
+    //     // Atiende a los vehiculos varados y los recarga
+    //     while(vehiculosSinBateria.isEmpty()) {
+    //         wait(); // esperar hasta que haya un vehiculo sin bateria
+    //     }
+    //     if (simulacionTerminada) return -1; 
+    //     return vehiculosSinBateria.remove(0); // retornar el ID del vehiculo que se va a recargar (el primero)
+    // }
+
     public synchronized int atenderSinBateria() throws InterruptedException {
-        // Atiende a los vehiculos varados y los recarga
-        while(vehiculosSinBateria.isEmpty()) {
-            wait(); // esperar hasta que haya un vehiculo sin bateria
+        // El bucle debe verificar la terminación para no quedarse bloqueado eternamente
+        while(vehiculosSinBateria.isEmpty() && !simulacionTerminada) {
+            wait(500); 
         }
-        return vehiculosSinBateria.remove(0); // retornar el ID del vehiculo que se va a recargar (el primero)
+        // Si despertamos porque terminó la simulación, salimos
+        if (simulacionTerminada) return -1; 
+        
+        return vehiculosSinBateria.remove(0);
     }
 
     public synchronized void recargaCompleta(int id) {
@@ -207,25 +287,6 @@ class Vehiculo extends Thread {
         this.bateria = bateria;
         this.monitor = monitor;
     }
-
-    @Override
-    public void run() {
-        while (!monitor.getSimulacionTerminada()) {
-            try {
-                if (this.bateria > 0) {
-                    // Logica de movimiento del vehiculo
-                }
-                else {
-                    System.out.println("Vehiculo " + id + " sin bateria. Esperando carga...");
-                    monitor.esperarRecarga(this.id);
-                    System.out.println("Vehiculo " + id + " recargado. Reanudando movimiento...");
-                }
-            } catch (Exception e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-    }
     
     public int getVehiculoId(){
         return this.id;
@@ -255,6 +316,52 @@ class Vehiculo extends Thread {
         this.bateria = recarga;
     }
 
+    public void setFila(int newFila){
+        this.fila = newFila;
+    }
+
+    public void setColumna(int newColumna){
+        this.columna = newColumna;
+    }
+
+
+    @Override
+    public void run() {
+        int direccion = 1;
+
+        // preferencia direccion adelante (1) sobre atras (-1) en id 0
+        if (this.id != 0) direccion = (Math.random() < 0.5) ? 1 : -1; 
+
+        while (!monitor.getSimulacionTerminada()) {
+            try {
+                if (this.bateria > 0) {
+                    boolean movimientoExitoso = monitor.moverVehiculo(this, direccion);
+
+                    if (movimientoExitoso) {
+                        this.bateria--;
+                        Thread.sleep(100);
+                        if(this.id == 0) direccion = 1;
+                    } 
+                    else { // desatascar
+                        direccion = (direccion == 1) ? -1 : 1; // cambiar de direccion
+
+                        // dejar respirar al procesaodr un momento para que otros hilos puedan moverse
+                        // Thread.yield();
+                        Thread.sleep(300);
+                    }
+                }
+                else {
+                    System.out.println("Vehiculo " + id + " sin bateria. Esperando carga...");
+                    monitor.esperarRecarga(this.id);
+                    System.out.println("Vehiculo " + id + " recargado. Reanudando movimiento...");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    }
+
 }
 
 class Cargador extends Thread {
@@ -279,7 +386,7 @@ class Cargador extends Thread {
                 // NOTA: this.getName() es un metodo de Thread que retorna el nombre del hilo por defecto
                 
                 System.out.println("Cargador " + this.getName() + " atendiendo vehiculo " + idVarado);
-                Thread.sleep(10000); // simula el tiempo de recarga
+                Thread.sleep(1000); // simula el tiempo de recarga
 
                 monitor.recargaCompleta(idVarado);
 
@@ -396,7 +503,7 @@ class RushHour {
 
         monitor.setListaVehiculos(listaDeVehiculos);
         monitor.initialBoard();
-        monitor.imprimirTablero();
+        // monitor.imprimirTablero();
 
 
         // 3. Inyectar la lista de vehiculos de vuelta al monitor 
