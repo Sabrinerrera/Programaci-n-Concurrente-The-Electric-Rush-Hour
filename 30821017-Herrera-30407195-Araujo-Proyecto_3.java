@@ -9,7 +9,7 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 class MonitorEstacionamiento {
-    private char[][] tablero = new char[6][6];
+    private String[][] tablero = new String[6][6];
     private List<Integer> vehiculosSinBateria = new ArrayList<>();
     private List<Vehiculo> todosLosVehiculos = new ArrayList<>();
     private boolean simulacionTerminada = false;
@@ -17,7 +17,7 @@ class MonitorEstacionamiento {
     public MonitorEstacionamiento() {
         for(int i = 0; i < 6; i++){
             for(int j = 0; j < 6; j++){
-                tablero[i][j] = '_';
+                tablero[i][j] = "_";
             }
         }
     }
@@ -122,7 +122,7 @@ class MonitorEstacionamiento {
         int tempColumna = columna;
 
         for (int i=0; i<vehiculo.getLongitud(); i++) {
-            if(tablero[tempFila][tempColumna] != '_') return false; // solapamiento
+            if(tablero[tempFila][tempColumna] != "_") return false; // solapamiento
 
             if(vehiculo.getOrientacion() == Vehiculo.Orientacion.h) {
                 tempColumna++; 
@@ -133,7 +133,7 @@ class MonitorEstacionamiento {
 
         // ocupar casilla
         for (int i=0; i<vehiculo.getLongitud(); i++) {
-            tablero[fila][columna] = (char) ('0' + vehiculo.getVehiculoId()); // llenando el tablero con el ID del vehiculo 🚧
+            tablero[fila][columna] = String.valueOf(vehiculo.getVehiculoId()); // llenando el tablero con el ID del vehiculo 🚧
 
             if(vehiculo.getOrientacion() == Vehiculo.Orientacion.h) {
                 columna++; 
@@ -254,6 +254,7 @@ class Vehiculo extends Thread {
     public void setBateria(int recarga){
         this.bateria = recarga;
     }
+
 }
 
 class Cargador extends Thread {
