@@ -1,5 +1,16 @@
 // CONSIDERACIONES:
-// 1. Nosotras establecemos cuanto de bateria poner como max.
+// 1. Nosotras establecimos la recarga de bateria en 10 
+// 2. Carro 0 tiene preferencia por direccion 1
+// 3. Nuevo hilo GuardianSolucion para detectar tableros sin solucion despues de 10 min de ejecucion
+// 4. Si hay otro carro H en la misma fila que el carro 0 que bloquea su camino hacia la salida, se asume que el tablero no tiene solucion
+// 5. Si hay toda una linea de carros V que ocupa toda la columna delande del carro 0, se asume que el tablero no tiene solucion
+// 6. Se agregaron mensajes de error detallados para casos de formato incorrecto, datos invalidos, y tableros sin solucion
+// 7. Se busca prioridad de recarga al vehiculo 0 en la lista de varados, 'coleandolo'
+// 8. Se decide imprimir el tablero en cada cambio para mostrar la ejecucion del programa
+// 9. La solucion del tablero se resuelve a traves de un algoritmo de aleatoriedad
+// 10. Se asume casilla vacia como "_", y se llena con el id del vehiculo cuando esta ocupada
+// 11. Se inicia la simulacion imprimiendo el tablero original y luego se muestra cada movimiento de los vehiculos con su hitorial de bateria
+// 12. initialBoard valida que no hayan solapamientos; en cambio, en la lectura se valida que no hayan vehiculos fuera de limites
 
 import java.util.List;
 import java.util.ArrayList;
@@ -86,13 +97,12 @@ class MonitorEstacionamiento {
 
         // imprimir tablero y vehiculo que se movio con su bateria restante
         imprimirTablero();
-        System.out.println("Vehiculo " + v.getVehiculoId() + " se movio. Bateria: " + (v.getBateria() - 1));
-        System.out.println("-------------------------");
+        System.out.println("Vehiculo " + v.getVehiculoId() + " se movio. Bateria: " + (v.getBateria() - 1) + "\n");
 
         // verificar si el vehiculo 0 llega con su parte frontal a la columna 5
         if (v.getVehiculoId() == 0 && (v.getColumna() + v.getLongitud() - 1) == 5) {
             this.simulacionTerminada = true;
-            System.out.println("¡EL VEHICULO 0 HA SALIDO!");
+            System.out.println("Vehiculo 0 llego a la salida");
             notifyAll();
         }
 
@@ -111,7 +121,7 @@ class MonitorEstacionamiento {
                 vehiculosSinBateria.add(id);
             }
 
-            System.out.println("Vehiculo " + id + " reportado sin bateria.");
+            System.out.println("Vehiculo " + id + " reportado sin bateria");
             notifyAll();
         }
     }
@@ -211,11 +221,6 @@ class MonitorEstacionamiento {
 
     public void initialBoard() {
         for (Vehiculo vehiculo : todosLosVehiculos) {
-            if(!esVehiculoValido(vehiculo)) {
-                System.err.println("Vehiculo " + vehiculo.getVehiculoId() + " fuera de limites.");
-                System.exit(1);
-            }
-
             if(!casillaOcupada(vehiculo)) {
                 System.err.println("Solapamiento detectado en vehiculo " + vehiculo.getVehiculoId());
                 System.exit(1);
@@ -330,9 +335,9 @@ class Vehiculo extends Thread {
                     }
                 }
                 else {
-                    System.out.println("Vehiculo " + id + " sin bateria. Esperando carga...");
+                    System.out.println("Vehiculo " + id + " esperando recarga");
                     monitor.esperarRecarga(this.id);
-                    System.out.println("Vehiculo " + id + " recargado. Reanudando movimiento...");
+                    System.out.println("Vehiculo " + id + " recargado");
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -367,7 +372,7 @@ class Cargador extends Thread {
                 break;
             }
         }
-        System.out.println("Cargador " + this.getName() + " termino su ejecucion.");
+        System.out.println("Cargador " + this.getName() + " termino su ejecucion");
     }
 
 }
@@ -398,7 +403,7 @@ class LectorVehiculos {
                     return listaVehiculos; 
                 }
                 else if (tokens.length != 6) {
-                    System.err.println("Error en linea " + numeroLinea + ": Formato incorrecto (se esperan 6 datos).");
+                    System.err.println("Error en linea " + numeroLinea + ": Formato incorrecto (se esperan 6 datos)");
                     System.exit(1);
                 }
                 try {
@@ -411,16 +416,16 @@ class LectorVehiculos {
                     int bateria = Integer.parseInt(tokens[5]);
 
                     if (orientacion != 'h' && orientacion != 'v') {
-                        throw new IllegalArgumentException("Orientacion '" + orientacion + "' no permitida.");
+                        throw new IllegalArgumentException("Orientacion '" + orientacion + "' no permitida");
                     }
                     if (fila < 0 || fila > 5 || columna < 0 || columna > 5) {
-                        throw new IllegalArgumentException("Coordenadas fuera de rango (0-5).");
+                        throw new IllegalArgumentException("Coordenadas fuera de rango (0-5)");
                     }
                     if (orientacion == 'h' && ((columna + longitud)-1) > 5) {
-                        throw new IllegalArgumentException("El vehiculo se sale del tablero horizontalmente.");
+                        throw new IllegalArgumentException("El vehiculo se sale del tablero horizontalmente");
                     }
                     if (orientacion == 'v' && ((fila + longitud)-1) > 5) {
-                        throw new IllegalArgumentException("El vehiculo se sale del tablero verticalmente.");
+                        throw new IllegalArgumentException("El vehiculo se sale del tablero verticalmente");
                     }
 
                     Vehiculo.Orientacion orientacionEnum;
@@ -441,15 +446,15 @@ class LectorVehiculos {
                     listaVehiculos.add(v);
 
                 } catch (NumberFormatException e) {
-                    System.err.println("FATAL: Error de formato numerico en linea " + numeroLinea);
+                    System.err.println("Error de formato numerico en linea " + numeroLinea);
                     System.exit(1);
                 } catch (IllegalArgumentException e) {
-                    System.err.println("FATAL: Dato invalido en linea " + numeroLinea + ": " + e.getMessage());
+                    System.err.println("Dato invalido en linea " + numeroLinea + ": " + e.getMessage());
                     System.exit(1);
                 }
             }
         } catch (FileNotFoundException e) {
-            System.err.println("Error: No se pudo encontrar el archivo '" + rutaArchivo + "'.");
+            System.err.println("No se pudo encontrar el archivo '" + rutaArchivo + "'");
             System.exit(1);
         }
         return listaVehiculos;
@@ -474,7 +479,7 @@ class GuardianSolucion extends Thread {
             Thread.sleep(tiempoLimite);
 
             if (!monitor.getSimulacionTerminada()) {
-                System.err.println("Tablero sin solucion: se excedio el tiempo limite de ejecucion (" + (tiempoLimite / 60000) + " min).");
+                System.err.println("Tablero sin solucion: se excedio el tiempo limite de ejecucion (" + (tiempoLimite / 60000) + " min)");
                 monitor.setSimulacionTerminada(true);
                 System.exit(1);
             }
@@ -504,7 +509,7 @@ class RushHour {
 
         for (Vehiculo vehiculo : listaDeVehiculos) {
             if (vehiculo.getId() != 0 && vehiculo.getFila() == filaCarro0 && vehiculo.getOrientacion() == Vehiculo.Orientacion.h && vehiculo.getColumna() >= cabezaColumnaCarro0) {
-                System.err.println("Tablero sin solucion: el vehiculo " + vehiculo.getVehiculoId() + " bloquea horizontalmente al carro 0 en la fila " + filaCarro0 + ".");
+                System.err.println("Tablero sin solucion: el vehiculo " + vehiculo.getVehiculoId() + " bloquea horizontalmente al carro 0 en la fila " + filaCarro0);
                 System.exit(1);
             }
         }
@@ -519,13 +524,17 @@ class RushHour {
             }
 
             if (celdasOcupadasEnColumna == 6) {
-                System.err.println("Tablero sin solucion: La columna " + col + " esta totalmente bloqueada por vehiculos verticales.");
+                System.err.println("Tablero sin solucion: La columna " + col + " esta totalmente bloqueada por vehiculos verticales");
                 System.exit(1);
             }
         }
 
         monitor.setListaVehiculos(listaDeVehiculos);
         monitor.initialBoard();
+
+        // imprimir tablero inicial (original)
+        monitor.imprimirTablero();
+        System.out.println("Tablero inicial\n");
 
         // 3. En caso de que no se encuentre solucion en 10 min, asumimos que el tablero no tiene solucion y se termina la simulacion
         GuardianSolucion guardian = new GuardianSolucion(monitor, 10 * 60000);
@@ -548,11 +557,9 @@ class RushHour {
         long endTime = System.currentTimeMillis();
         long duration = endTime - startTime;
 
-        System.out.println("\n========================================");
-        System.out.println("SIMULACIÓN FINALIZADA");
-        System.out.println("Tiempo total de ejecución: " + duration + " ms");
-        System.out.println("En segundos: " + (duration / 1000.0) + " s");
-        System.out.println("========================================");
+        System.out.println("\nSimulacion terminada");
+        System.out.println("Tiempo total de ejecucion: " + duration + " ms");
+        System.out.println("En segundos: " + (duration / 1000.0) + " s\n");
     }
 }
 
