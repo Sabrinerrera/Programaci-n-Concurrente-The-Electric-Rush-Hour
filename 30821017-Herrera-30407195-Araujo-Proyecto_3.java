@@ -84,26 +84,26 @@ class MonitorEstacionamiento {
             }
         }
 
-        // 5. Mostrar progreso
+        // imprimir tablero y vehiculo que se movio con su bateria restante
         imprimirTablero();
         System.out.println("Vehiculo " + v.getVehiculoId() + " se movio. Bateria: " + (v.getBateria() - 1));
         System.out.println("-------------------------");
 
-        // 6. Verificar condición de salida (Vehículo 0 llega con su parte frontal a la col 5)
+        // verificar si el vehiculo 0 llega con su parte frontal a la columna 5
         if (v.getVehiculoId() == 0 && (v.getColumna() + v.getLongitud() - 1) == 5) {
             this.simulacionTerminada = true;
             System.out.println("¡EL VEHICULO 0 HA SALIDO!");
             notifyAll();
         }
 
-        notifyAll(); // Despierta a otros (incluyendo cargadores o autos esperando)
+        notifyAll(); // despierta a otros (incluyendo cargadores o vehiculos esperando)
         return true;
     }
 
     public synchronized void reportarSinBateria(int id) {
-        // Agrega el ID del vehiculo a la lista de varados
+        // agrega el id del vehiculo a la lista de varados
         if (!vehiculosSinBateria.contains(id)) {
-            // NOTA: la prioridad de recarga la tiene el ID 0
+            // prioridad de recarga al vehiculo 0
             if (id == 0) {
                 vehiculosSinBateria.add(0, id);
             }
@@ -116,31 +116,21 @@ class MonitorEstacionamiento {
         }
     }
 
-    // public synchronized int atenderSinBateria() throws InterruptedException {
-    //     // Atiende a los vehiculos varados y los recarga
-    //     while(vehiculosSinBateria.isEmpty()) {
-    //         wait(); // esperar hasta que haya un vehiculo sin bateria
-    //     }
-    //     if (simulacionTerminada) return -1;
-    //     return vehiculosSinBateria.remove(0); // retornar el ID del vehiculo que se va a recargar (el primero)
-    // }
-
     public synchronized int atenderSinBateria() throws InterruptedException {
-        // El bucle debe verificar la terminación para no quedarse bloqueado eternamente
+
         while(vehiculosSinBateria.isEmpty() && !simulacionTerminada) {
             wait(500);
         }
-        // Si despertamos porque terminó la simulación, salimos
+
         if (simulacionTerminada) return -1;
 
         return vehiculosSinBateria.remove(0);
     }
 
     public synchronized void recargaCompleta(int id) {
-        // Elimina el ID del vehiculo de la lista de los sin bateria
         for (Vehiculo vehiculo : todosLosVehiculos) {
             if (vehiculo.getVehiculoId() == id) {
-                vehiculo.setBateria(10); // definimos 10 como la bateria maxima
+                vehiculo.setBateria(10); // definimos 10 como la cantidad de bateria a recargar
                 break;
             }
         }
@@ -148,7 +138,7 @@ class MonitorEstacionamiento {
     }
 
     public synchronized void esperarRecarga(int id) throws InterruptedException {
-        // Vehiculos se bloquea a si mismo hasta que su bateria sea recargada
+        // los vehiculos se bloquean a si mismo hasta que su bateria sea recargada
         reportarSinBateria(id);
 
         Vehiculo vehiculoActual = null;
@@ -163,9 +153,8 @@ class MonitorEstacionamiento {
         }
     }
 
-
-    // Funciones de utilidad
-    // 1. Inicializacion del tablero
+    // funciones de utilidad
+    // inicializacion del tablero
     private boolean estaEnTablero(int fila, int columna) {
         return fila >= 0 && fila < 6 && columna >= 0 && columna < 6;
     }
@@ -181,9 +170,9 @@ class MonitorEstacionamiento {
         int columnaFinal = columnaInicial;
 
         if (vehiculo.getOrientacion() == Vehiculo.Orientacion.h) {
-            columnaFinal += vehiculo.getLongitud() - 1; // extremo vehiculo horizontal
+            columnaFinal += vehiculo.getLongitud() - 1; 
         } else {
-            filaFinal += vehiculo.getLongitud() - 1; // extremo vehiculo vertical
+            filaFinal += vehiculo.getLongitud() - 1;
         }
 
         return estaEnTablero(filaInicial, columnaInicial) && estaEnTablero(filaFinal, columnaFinal);
@@ -209,7 +198,7 @@ class MonitorEstacionamiento {
 
         // ocupar casilla
         for (int i=0; i<vehiculo.getLongitud(); i++) {
-            tablero[fila][columna] = String.valueOf(vehiculo.getVehiculoId()); // llenando el tablero con el ID del vehiculo 🚧
+            tablero[fila][columna] = String.valueOf(vehiculo.getVehiculoId()); // llenar el tablero con el id del vehiculo
 
             if(vehiculo.getOrientacion() == Vehiculo.Orientacion.h) {
                 columna++;
@@ -223,7 +212,7 @@ class MonitorEstacionamiento {
     public void initialBoard() {
         for (Vehiculo vehiculo : todosLosVehiculos) {
             if(!esVehiculoValido(vehiculo)) {
-                System.err.println("Vehiculo " + vehiculo.getVehiculoId() + " fuera de limites."); //🚧
+                System.err.println("Vehiculo " + vehiculo.getVehiculoId() + " fuera de limites.");
                 System.exit(1);
             }
 
@@ -233,8 +222,6 @@ class MonitorEstacionamiento {
             }
         }
     }
-
-    // getters y setters
 
     public boolean getSimulacionTerminada() {
         return this.simulacionTerminada;
@@ -273,7 +260,6 @@ class Vehiculo extends Thread {
     private int bateria;
     private MonitorEstacionamiento monitor;
 
-    // Constructor
     public Vehiculo(int id, Orientacion orientacion, int fila, int columna, int longitud, int bateria, MonitorEstacionamiento monitor) {
         this.id = id;
         this.orientacion = orientacion;
@@ -340,9 +326,6 @@ class Vehiculo extends Thread {
                     }
                     else { // desatascar
                         direccion = (direccion == 1) ? -1 : 1; // cambiar de direccion
-
-                        // dejar respirar al procesaodr un momento para que otros hilos puedan moverse
-                        // Thread.yield();
                         Thread.sleep(300);
                     }
                 }
@@ -363,27 +346,20 @@ class Vehiculo extends Thread {
 class Cargador extends Thread {
     private MonitorEstacionamiento monitor;
 
-    // Constructor
     public Cargador(MonitorEstacionamiento monitor) {
         this.monitor = monitor;
-
-        // PRUEBA: confirmar en consola que el cargador fue creado
-        //System.out.println("[PRUEBA] Cargador creado: " + this.getName());
     }
 
     @Override
     public void run() {
         while (!monitor.getSimulacionTerminada()) {
             try {
-                int idVarado = monitor.atenderSinBateria(); // si la lista esta vacia, se bloquea el hilo hasta que se llene
-
-                if (idVarado == -1) break; // si se retorna -1, significa que la simulacion ha terminado
+                int idVarado = monitor.atenderSinBateria(); 
+                if (idVarado == -1) break; 
 
                 // NOTA: this.getName() es un metodo de Thread que retorna el nombre del hilo por defecto
-
                 System.out.println("Cargador " + this.getName() + " atendiendo vehiculo " + idVarado);
-                Thread.sleep(1000); // simula el tiempo de recarga
-
+                Thread.sleep(1000); 
                 monitor.recargaCompleta(idVarado);
 
             } catch (InterruptedException e) {
@@ -392,8 +368,6 @@ class Cargador extends Thread {
             }
         }
         System.out.println("Cargador " + this.getName() + " termino su ejecucion.");
-        // PRUEBA: confirmar en consola que el hilo cargador inició
-        //System.out.println("[PRUEBA] Cargador iniciado: " + this.getName());
     }
 
 }
@@ -411,30 +385,24 @@ class LectorVehiculos {
                 numeroLinea++;
                 String linea = lector.nextLine().trim();
 
-                // Ignorar lineas vacias
                 if (linea.isEmpty()) continue;
 
-                // Tokenizacion por uno o mas espacios en blanco
                 String[] tokens = linea.split("\\s*,\\s*");
 
-                // Validar que la linea tenga exactamente 6 campos o es la linea cantidad de cargadores
                 if (tokens.length == 2 && tokens[0].equalsIgnoreCase("cargadores")) {
-                    // PRUEBA: informar cuántos cargadores se van a crear
-                    //System.out.println("[PRUEBA] Cantidad de cargadores a crear: " + tokens[1]);
 
-                    // Si es un cargador, se crea un hilo por cada cargador y se inicia
                     for (int i = 0; i < Integer.parseInt(tokens[1]); i++) {
                         Cargador cargador = new Cargador(monitor);
                         cargador.start();
                     }
-                    return listaVehiculos; // No se esperan mas vehiculos despues de la linea de cargadores
+                    return listaVehiculos; 
                 }
                 else if (tokens.length != 6) {
                     System.err.println("Error en linea " + numeroLinea + ": Formato incorrecto (se esperan 6 datos).");
                     System.exit(1);
                 }
                 try {
-                    // Extraccion de datos
+                    // extraccion de datos
                     int id = Integer.parseInt(tokens[0]);
                     char orientacion = tokens[1].toLowerCase().charAt(0);
                     int fila = Integer.parseInt(tokens[2]);
@@ -468,7 +436,7 @@ class LectorVehiculos {
                         datosCarro0[2] = longitud;
                     }
 
-                    // Crear el vehiculo y añadirlo a la lista
+                    // crear el vehiculo y agregarlo a la lista
                     Vehiculo v = new Vehiculo(id, orientacionEnum, fila, columna, longitud, bateria, monitor);
                     listaVehiculos.add(v);
 
@@ -484,7 +452,6 @@ class LectorVehiculos {
             System.err.println("Error: No se pudo encontrar el archivo '" + rutaArchivo + "'.");
             System.exit(1);
         }
-
         return listaVehiculos;
     }
 }
@@ -519,15 +486,11 @@ class GuardianSolucion extends Thread {
 
 class RushHour {
     public static void main(String[] args) {
-        // para medir el tiempo
-        long startTime = System.currentTimeMillis();
-        // crear el Monitor vacio
+        long startTime = System.currentTimeMillis(); // para medir el tiempo
         MonitorEstacionamiento monitor = new MonitorEstacionamiento();
-
         int[] datosCarro0 = new int[3]; // [fila, columna, longitud]
 
-        // leer el archivo y crear los hilos de los vehiculos
-        // pasandoles la referencia del monitor que acabamos de crear
+        // Lectura archivos
         LectorVehiculos lector = new LectorVehiculos();
         List<Vehiculo> listaDeVehiculos = lector.leerArchivo(args[0], monitor, datosCarro0);
 
@@ -535,9 +498,10 @@ class RushHour {
         int colCarro0 = datosCarro0[1];
         int longitudCarro0 = datosCarro0[2];
 
-        // Comprobacion de posible solucion de tablero:
-        // 1. Caso en el que hay otro carro H en la misma fila que el carro 0, no seguir
+        // Identificar tablero sin solucion
+        // 1. Hay otro carro H en la misma fila que el carro 0 que bloquea su camino hacia la salida
         int cabezaColumnaCarro0 = colCarro0 + longitudCarro0; // recalculo cabeza carro 0
+
         for (Vehiculo vehiculo : listaDeVehiculos) {
             if (vehiculo.getId() != 0 && vehiculo.getFila() == filaCarro0 && vehiculo.getOrientacion() == Vehiculo.Orientacion.h && vehiculo.getColumna() >= cabezaColumnaCarro0) {
                 System.err.println("Tablero sin solucion: el vehiculo " + vehiculo.getVehiculoId() + " bloquea horizontalmente al carro 0 en la fila " + filaCarro0 + ".");
@@ -545,8 +509,7 @@ class RushHour {
             }
         }
 
-        // 2. Si hay toda una linea de carros de la misma direccion que ocupa toda la columna delande del id 0, no seguir
-        // solo revisamos las columnas que estan delante del carro 0
+        // 2. Hay toda una linea de carros V que ocupa toda la columna delande del carro 0
         for (int col = cabezaColumnaCarro0; col < 6; col++) {
             int celdasOcupadasEnColumna = 0;
             for (Vehiculo vehiculo : listaDeVehiculos) {
@@ -555,7 +518,6 @@ class RushHour {
                 }
             }
 
-            // Si la suma de las longitudes de los carros verticales en esa columna es 6 (todo el tablero)
             if (celdasOcupadasEnColumna == 6) {
                 System.err.println("Tablero sin solucion: La columna " + col + " esta totalmente bloqueada por vehiculos verticales.");
                 System.exit(1);
@@ -576,12 +538,13 @@ class RushHour {
         // Bucle de espera hasta que el monitor marque el fin
         while (!monitor.getSimulacionTerminada()) {
             try {
-                Thread.sleep(100); // Pequeña pausa para no saturar la CPU
+                Thread.sleep(100); 
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
+        // Calculo del tiempo de ejecución
         long endTime = System.currentTimeMillis();
         long duration = endTime - startTime;
 
@@ -595,6 +558,7 @@ class RushHour {
 
 // para correr el programa, se debe pasar la ruta del archivo de texto como argumento
 // java RushHour ruta_del_archivo.txt
+
 // ejemplo de comando para compilar y correr el programa
 // javac 30821017-Herrera-30407195-Araujo-Proyecto_3.java
 // java RushHour pruebas.txt
