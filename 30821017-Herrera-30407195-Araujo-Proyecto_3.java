@@ -9,7 +9,7 @@
 // 8. Se decide imprimir el tablero en cada cambio para mostrar la ejecucion del programa
 // 9. La solucion del tablero se resuelve a traves de un algoritmo de aleatoriedad
 // 10. Se asume casilla vacia como "_", y se llena con el id del vehiculo cuando esta ocupada
-// 11. Se inicia la simulacion imprimiendo el tablero original y luego se muestra cada movimiento de los vehiculos con su hitorial de bateria
+// 11. Se inicia la simulacion imprimiendo el tablero original y luego se muestra cada movimiento de los vehiculos con su bateria restante
 // 12. initialBoard valida que no hayan solapamientos; en cambio, en la lectura se valida que no hayan vehiculos fuera de limites
 
 import java.util.List;
@@ -169,25 +169,6 @@ class MonitorEstacionamiento {
     // inicializacion del tablero
     private boolean estaEnTablero(int fila, int columna) {
         return fila >= 0 && fila < 6 && columna >= 0 && columna < 6;
-    }
-
-    private boolean esVehiculoValido(Vehiculo vehiculo) {
-
-        if (vehiculo.getLongitud() <= 0 || vehiculo.getBateria() < 0) return false;
-
-        // tener el extremo del vehiculo
-        int filaInicial = vehiculo.getFila();
-        int columnaInicial = vehiculo.getColumna();
-        int filaFinal = filaInicial;
-        int columnaFinal = columnaInicial;
-
-        if (vehiculo.getOrientacion() == Vehiculo.Orientacion.h) {
-            columnaFinal += vehiculo.getLongitud() - 1; 
-        } else {
-            filaFinal += vehiculo.getLongitud() - 1;
-        }
-
-        return estaEnTablero(filaInicial, columnaInicial) && estaEnTablero(filaFinal, columnaFinal);
     }
 
     private boolean casillaOcupada(Vehiculo vehiculo) {

@@ -88,3 +88,17 @@ Para eliminar todos los archivos `.class` generados y dejar el directorio limpio
 * Tras iniciar la ejecución con el comando `make run` o `make test[n]` (correspondiente al archivo pruebas[n].txt), el programa imprimirá primero el tablero en su estado inicial intacto solo si es válido, en caso contrario se imprime un mensaje con el tipo de error en los vehiculos, ya sea solapamiento, que se salgan del tablero, o en el input.
 * Posteriormente, por cada movimiento exitoso de cualquier vehículo, se refrescará y re-imprimirá la cuadrícula completa de 6x6, junto con un mensaje que indica qué vehículo se movió y la cantidad de batería que le resta en ese momento.
 * Cuando la simulación concluye (ya sea por victoria del ID 0 al cruzar la columna 5 o por detectarse que el tablero no tiene solución), el sistema mostrará un resumen detallando el **tiempo total de ejecución**, expresado tanto en milisegundos (ms) como en segundos (s).
+
+### Glosario de Casos de Prueba
+
+#### Pruebas con Solución:
+Pruebas1: escenario de dependencia circular entre vehículos, baterias bajas mixtas, 2 cargadores.
+Pruebas2: todas las baterias comienzan en 0, 1 cargador.
+Pruebas3: vehículo 0 inicia adelantado (columna 2) con batería 10, debe retroceder para poder despejar el camino de otros vehiculos que obstaculizan su salida e inician con 0 o poca bateria, 1 cargador.
+
+#### Pruebas sin Solución o Tablero inválido:
+Pruebas4: tablero sin solución por bloqueo estático en la fila del vehículo objetivo por un vehículo horizontal que obstruye permanentemente su trayectoria de salida.
+Pruebas5: tablero sin solución por bloqueo estático de vehículos verticales que ocupan toda una columna delante de la parte frontal del vehículo objetivo obstruyendo permanentemente su trayectoria de salida.
+Pruebas6: Tablero sin solución por bloqueo persistente en la trayectoria de salida del vehículo 0, se excede el tiempo limite 10 min y finaliza la ejecución.
+Pruebas7: Tablero inválido, por dato invalido, un vehiculo se sale del tablero.
+Pruebas8: Tablero inválido, por solapamiento.
