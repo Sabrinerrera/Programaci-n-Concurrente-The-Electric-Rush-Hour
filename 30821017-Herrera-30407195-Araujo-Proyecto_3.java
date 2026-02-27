@@ -22,7 +22,9 @@ class MonitorEstacionamiento {
     private String[][] tablero = new String[6][6];
     private List<Integer> vehiculosSinBateria = new ArrayList<>();
     private List<Vehiculo> todosLosVehiculos = new ArrayList<>();
+    private List<Cargador> todosLosCargadores = new ArrayList<>();
     private volatile boolean simulacionTerminada = false;
+    private boolean victoria = false;
 
     public MonitorEstacionamiento() {
         for(int i = 0; i < 6; i++){
@@ -102,7 +104,7 @@ class MonitorEstacionamiento {
         // verificar si el vehiculo 0 llega con su parte frontal a la columna 5
         if (v.getVehiculoId() == 0 && (v.getColumna() + v.getLongitud() - 1) == 5) {
             this.simulacionTerminada = true;
-            System.out.println("Vehiculo 0 llego a la salida");
+            this.victoria = true;
             notifyAll();
         }
 
@@ -226,6 +228,18 @@ class MonitorEstacionamiento {
                 System.exit(1);
             }
         }
+    }
+
+    public void agregarCargador(Cargador cargador) {
+        this.todosLosCargadores.add(cargador);
+    }
+
+    public List<Cargador> getListaCargadores() {
+        return this.todosLosCargadores;
+    }
+
+    public boolean getVictoria() {
+        return this.victoria;
     }
 
     public boolean getSimulacionTerminada() {
@@ -398,6 +412,7 @@ class LectorVehiculos {
 
                     for (int i = 0; i < Integer.parseInt(tokens[1]); i++) {
                         Cargador cargador = new Cargador(monitor);
+                        monitor.agregarCargador(cargador);
                         cargador.start();
                     }
                     return listaVehiculos; 
@@ -553,13 +568,33 @@ class RushHour {
             }
         }
 
+        synchronized (monitor) {
+            monitor.notifyAll(); // despertar a todos los hilos para que terminen su ejecucion
+        }
+
+        // main espera que todos los cargadores se despidan
+        for (Cargador cargador : monitor.getListaCargadores()) {
+            try {
+                cargador.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+
         // Calculo del tiempo de ejecución
         long endTime = System.currentTimeMillis();
         long duration = endTime - startTime;
 
+        // imprimir en orden (asegurando llegada de vehiculo 0)
+        if (monitor.getVictoria()) {
+            System.out.println("\nVehiculo 0 llego a la salida");
+        }
         System.out.println("\nSimulacion terminada");
         System.out.println("Tiempo total de ejecucion: " + duration + " ms");
         System.out.println("En segundos: " + (duration / 1000.0) + " s\n");
+
+        System.exit(0); 
     }
 }
 
