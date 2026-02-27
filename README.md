@@ -69,8 +69,7 @@ Asegúrese de estar ubicado en el directorio raíz del proyecto (donde se encuen
 
 **1. Para compilar el código fuente:**
 De esta forma, el comando buscará el archivo `.java` y generará los archivos compilados `.class` necesarios para la ejecución.
-` ` `make compile
-` ` `
+`make compile`
 *(Nota: Ejecutar simplemente `make` realizará esta misma acción por defecto).*
 
 **2. Para ejecutar el programa:**
