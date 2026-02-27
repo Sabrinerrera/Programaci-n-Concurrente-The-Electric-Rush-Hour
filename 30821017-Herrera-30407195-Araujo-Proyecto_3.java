@@ -563,9 +563,6 @@ class RushHour {
     }
 }
 
-// para correr el programa, se debe pasar la ruta del archivo de texto como argumento
-// java RushHour ruta_del_archivo.txt
-
-// ejemplo de comando para compilar y correr el programa
+// ejemplo de comando para compilar y correr el programa sin el Makefile
 // javac 30821017-Herrera-30407195-Araujo-Proyecto_3.java
-// java RushHour pruebas.txt
+// java RushHour <ruta_del_archivo.txt>

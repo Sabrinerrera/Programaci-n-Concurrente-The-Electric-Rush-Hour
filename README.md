@@ -59,27 +59,34 @@ En dichos casos, o si se excede el tiempo límite (10 minutos gestionados por `G
 
 ## 6. Instrucciones de Uso y Casos de Prueba
 
-### Compilación y Ejecución
+### Compilación y Ejecución mediante Makefile
 
-La solución fue desarrollada de manera independiente de cualquier IDE y puede ser compilada y ejecutada directamente desde una terminal.
+Para garantizar la portabilidad y cumplir con la restricción de no depender de un Entorno de Desarrollo Integrado (IDE), el proyecto incluye un archivo `Makefile`. Esto automatiza el proceso y permite compilar y ejecutar la simulación desde cualquier consola o terminal estándar.
 
-1. Para compilar el código fuente:
-```bash
-javac 30821017-Herrera-30407195-Araujo-Proyecto_3.java
+El sistema recibe un único archivo `.txt` por cada ejecución, el cual dicta el estado inicial del tablero. Se disponen de diferentes casos de prueba (ej. `pruebas1.txt`, `pruebas2.txt`, entre otros).
 
-```
+Asegúrese de estar ubicado en el directorio raíz del proyecto (donde se encuentran el código fuente, los archivos de prueba y el `Makefile`) y utilice los siguientes comandos:
 
+**1. Para compilar el código fuente:**
+De esta forma, el comando buscará el archivo `.java` y generará los archivos compilados `.class` necesarios para la ejecución.
+` ` `bash
+make compile
+` ` `
+*(Nota: Ejecutar simplemente `make` realizará esta misma acción por defecto).*
 
-2. Para ejecutar el programa:
-```bash
-java RushHour <ruta_del_archivo.txt>
+**2. Para ejecutar el programa:**
+Dado que el programa requiere recibir el nombre del archivo de texto como argumento, se debe pasar mediante la variable `ARGS`.
+` ` `bash
+make run ARGS="<ruta_del_archivo.txt>"
+` ` `
 
-```
+**3. Para limpiar el directorio:**
+Para eliminar todos los archivos `.class` generados y dejar el directorio limpio, ejecute:
+` ` `bash
+make clean
+` ` `
 
-
-
-### Manejo de Casos de Prueba y Salida
-
-* El programa recibe **un único archivo `.txt` por cada ejecución**. Se disponen de diferentes casos de prueba (`pruebas1.txt`, `pruebas2.txt`, etc.), los cuales deben ser suministrados individualmente como parámetro al momento de llamar al `main`.
-* **Formato de Salida:** Tras ejecutar, el programa imprimirá primero el tablero en su estado inicial intacto. Posteriormente, por cada movimiento exitoso de cualquier vehículo, se refrescará y re-imprimirá la cuadrícula completa de 6x6, junto con un mensaje que indica qué vehículo se movió y la cantidad de batería que le resta en ese momento.
-* **Cálculo de Tiempos:** Cuando la simulación concluye (ya sea por victoria del ID 0 al cruzar la columna 5 o por tablero sin solución detectado), el sistema mostrará en consola un resumen que detalla el **tiempo total de ejecución de la simulación**, expresado tanto en milisegundos (ms) como en segundos (s).
+### Formato de Salida en Consola
+* Tras iniciar la ejecución con el comando `make run`, el programa imprimirá primero el tablero en su estado inicial intacto.
+* Posteriormente, por cada movimiento exitoso de cualquier vehículo, se refrescará y re-imprimirá la cuadrícula completa de 6x6, junto con un mensaje que indica qué vehículo se movió y la cantidad de batería que le resta en ese momento.
+* Cuando la simulación concluye (ya sea por victoria del ID 0 al cruzar la columna 5 o por detectarse que el tablero no tiene solución), el sistema mostrará un resumen detallando el **tiempo total de ejecución**, expresado tanto en milisegundos (ms) como en segundos (s).
