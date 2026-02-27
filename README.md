@@ -93,12 +93,17 @@ Para eliminar todos los archivos `.class` generados y dejar el directorio limpio
 
 #### Pruebas con Solución:
 Pruebas1: escenario de dependencia circular entre vehículos, baterias bajas mixtas, 2 cargadores.
+
 Pruebas2: todas las baterias comienzan en 0, 1 cargador.
+
 Pruebas3: vehículo 0 inicia adelantado (columna 2) con batería 10, debe retroceder para poder despejar el camino de otros vehiculos que obstaculizan su salida e inician con 0 o poca bateria, 1 cargador.
 
 #### Pruebas sin Solución o Tablero inválido:
 Pruebas4: tablero sin solución por bloqueo estático en la fila del vehículo objetivo por un vehículo horizontal que obstruye permanentemente su trayectoria de salida.
+
 Pruebas5: tablero sin solución por bloqueo estático de vehículos verticales que ocupan toda una columna delante de la parte frontal del vehículo objetivo obstruyendo permanentemente su trayectoria de salida.
+
 Pruebas6: Tablero sin solución por bloqueo persistente en la trayectoria de salida del vehículo 0, se excede el tiempo limite 10 min y finaliza la ejecución.
+
 Pruebas7: Tablero inválido, por dato invalido, un vehiculo se sale del tablero.
 Pruebas8: Tablero inválido, por solapamiento.
