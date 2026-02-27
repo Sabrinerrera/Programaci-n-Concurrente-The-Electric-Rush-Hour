@@ -106,4 +106,5 @@ Pruebas5: tablero sin solución por bloqueo estático de vehículos verticales q
 Pruebas6: Tablero sin solución por bloqueo persistente en la trayectoria de salida del vehículo 0, se excede el tiempo limite 10 min y finaliza la ejecución.
 
 Pruebas7: Tablero inválido, por dato invalido, un vehiculo se sale del tablero.
+
 Pruebas8: Tablero inválido, por solapamiento.
