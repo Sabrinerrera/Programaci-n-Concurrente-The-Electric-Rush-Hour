@@ -69,24 +69,23 @@ Asegúrese de estar ubicado en el directorio raíz del proyecto (donde se encuen
 
 **1. Para compilar el código fuente:**
 De esta forma, el comando buscará el archivo `.java` y generará los archivos compilados `.class` necesarios para la ejecución.
-` ` `bash
-make compile
+` ` `make compile
 ` ` `
 *(Nota: Ejecutar simplemente `make` realizará esta misma acción por defecto).*
 
 **2. Para ejecutar el programa:**
 Dado que el programa requiere recibir el nombre del archivo de texto como argumento, se debe pasar mediante la variable `ARGS`.
-` ` `bash
-make run ARGS="<ruta_del_archivo.txt>"
-` ` `
+`make run ARGS="<ruta_del_archivo.txt>"`
 
-**3. Para limpiar el directorio:**
+**3.Para ejecutar pruebas de manera rápida:**
+Se han configurado reglas directas para cada caso de prueba disponible. Por ejemplo, para ejecutar la prueba 1:
+`make test1`
+
+**4. Para limpiar el directorio:**
 Para eliminar todos los archivos `.class` generados y dejar el directorio limpio, ejecute:
-` ` `bash
-make clean
-` ` `
+`make clean`
 
 ### Formato de Salida en Consola
-* Tras iniciar la ejecución con el comando `make run`, el programa imprimirá primero el tablero en su estado inicial intacto.
+* Tras iniciar la ejecución con el comando `make run` o `make test[n]` (correspondiente al archivo pruebas[n].txt), el programa imprimirá primero el tablero en su estado inicial intacto solo si es válido, en caso contrario se imprime un mensaje con el tipo de error en los vehiculos, ya sea solapamiento, que se salgan del tablero, o en el input.
 * Posteriormente, por cada movimiento exitoso de cualquier vehículo, se refrescará y re-imprimirá la cuadrícula completa de 6x6, junto con un mensaje que indica qué vehículo se movió y la cantidad de batería que le resta en ese momento.
 * Cuando la simulación concluye (ya sea por victoria del ID 0 al cruzar la columna 5 o por detectarse que el tablero no tiene solución), el sistema mostrará un resumen detallando el **tiempo total de ejecución**, expresado tanto en milisegundos (ms) como en segundos (s).
