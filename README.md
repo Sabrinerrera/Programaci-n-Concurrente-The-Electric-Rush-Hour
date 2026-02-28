@@ -87,9 +87,9 @@ Para eliminar todos los archivos `.class` generados y dejar el directorio limpio
 ### Formato de Salida en Consola
 * Posteriormente, por cada movimiento exitoso de cualquier vehículo, se refrescará y re-imprimirá la cuadrícula completa de 6x6, junto con un mensaje que indica qué vehículo se movió y la cantidad de batería que le resta en ese momento.
 * Tras iniciar la ejecución con el comando `make run` o `make test[n]` (correspondiente al archivo pruebas[n].txt), el programa imprimirá primero el tablero en su estado inicial intacto (solo si éste es válido), en caso contrario, se imprime un mensaje con el tipo de error en los vehiculos, como solapamiento, que se salgan del tablero los vehículos, o en el input.
+* Cuando la simulación concluye, se concede un espacio antes de las correspondientes impresiones finales para garantizar que los cargadores empleados se "despidan" finalizando su ejecución asimismo; posteriormente se indicará que el vehículo 0 encontró su salida, para luego el sistema mostrar un resumen detallando el **tiempo total de ejecución**, expresado tanto en milisegundos (ms) como en segundos (s).
 
 ### Glosario de Casos de Prueba
-* Cuando la simulación concluye, se concede un espacio antes de las correspondientes impresiones finales para garantizar que los cargadores empleados se "despidan" finalizando su ejecución asimismo; posteriorme se indicará que el vehículo 0 encontró su salida, para luego el sistema mostrar un resumen detallando el **tiempo total de ejecución**, expresado tanto en milisegundos (ms) como en segundos (s).
 
 #### Pruebas con Solución:
 * **pruebas1.txt**: Escenario de dependencia circular entre vehículos, baterías bajas mixtas; 2 cargadores.
