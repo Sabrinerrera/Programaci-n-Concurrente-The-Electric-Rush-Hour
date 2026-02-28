@@ -105,6 +105,6 @@ Para eliminar todos los archivos `.class` generados y dejar el directorio limpio
 
 * **pruebas6.txt**: Tablero sin solución por bloqueo persistente en la trayectoria de salida del vehículo 0; se excede el tiempo limite (10 min.) y finaliza la ejecución.
 
-**pruebas7.txt**: Tablero inválido, por dato inválido donde un vehículo se sale del tablero.
+* **pruebas7.txt**: Tablero inválido, por dato inválido donde un vehículo se sale del tablero.
 
 * **pruebas8.txt**: Tablero inválido por solapamiento.
