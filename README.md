@@ -20,7 +20,7 @@ Todos los recursos compartidos están encapsulados dentro de la clase `MonitorEs
 * `atenderSinBateria()`: Extrae y retorna el primer vehículo varado de la lista para que el cargador lo procese.
 
 
-* **Estado de la Simulación (`simulacionTerminada`):** Una variable booleana definida como `volatile` que indica si el vehículo objetivo ha salido del tablero o si se ha determinado que el juego es irresoluble. Es leída constantemente por todos los hilos en ejecución.
+* **Estado de la Simulación (`simulacionTerminada`):** Una variable booleana que indica si el vehículo objetivo ha salido del tablero o si se ha determinado que el juego es irresoluble. Es leída constantemente por todos los hilos en ejecución.
 * **Lista de Todos los Vehículos (`todosLosVehiculos`):** Utilizada para mapear los IDs con los objetos a la hora de manipular la batería mediante el método `recargaCompleta(int id)`.
 
 ## 3. Condiciones de Sincronización para Exclusión Mutua
@@ -28,7 +28,7 @@ Todos los recursos compartidos están encapsulados dentro de la clase `MonitorEs
 Para evitar condiciones de carrera y garantizar la exclusión mutua (por ejemplo, evitar que dos vehículos ocupen la misma celda o que dos cargadores atiendan al mismo vehículo a la vez), se establecieron métodos con el modificador `synchronized` dentro del monitor:
 
 * **Sincronización de Movimiento:** El método `moverVehiculo()` está sincronizado. Esto garantiza que el cálculo del destino, la verificación de que la casilla esté libre y la posterior escritura de los nuevos valores en la matriz ocurran de forma atómica.
-* **Coordinación Consumidor-Productor (Wait y NotifyAll):** * Cuando un vehículo se queda sin batería, llama a `esperarRecarga()`, donde se encola y entra en un estado de `wait()` iterativo (comprobando su estado de batería) liberando el candado del monitor.
+* **Coordinación Consumidor-Productor (Wait y NotifyAll):** Cuando un vehículo se queda sin batería, llama a `esperarRecarga()`, donde se encola y entra en un estado de `wait()` iterativo (comprobando su estado de batería) liberando el candado del monitor.
 * El cargador, al solicitar trabajo en `atenderSinBateria()`, ejecuta un `wait(500)` si la cola está vacía, liberando el monitor pero revisando periódicamente si la simulación ha terminado.
 * Al finalizar una carga en `recargaCompleta()`, el cargador actualiza la batería a 10 e invoca `notifyAll()`, despertando al vehículo correspondiente para que prosiga.
 
@@ -85,26 +85,26 @@ Para eliminar todos los archivos `.class` generados y dejar el directorio limpio
 `make clean`
 
 ### Formato de Salida en Consola
-* Tras iniciar la ejecución con el comando `make run` o `make test[n]` (correspondiente al archivo pruebas[n].txt), el programa imprimirá primero el tablero en su estado inicial intacto solo si es válido, en caso contrario se imprime un mensaje con el tipo de error en los vehiculos, ya sea solapamiento, que se salgan del tablero, o en el input.
 * Posteriormente, por cada movimiento exitoso de cualquier vehículo, se refrescará y re-imprimirá la cuadrícula completa de 6x6, junto con un mensaje que indica qué vehículo se movió y la cantidad de batería que le resta en ese momento.
-* Cuando la simulación concluye (ya sea por victoria del ID 0 al cruzar la columna 5 o por detectarse que el tablero no tiene solución), el sistema mostrará un resumen detallando el **tiempo total de ejecución**, expresado tanto en milisegundos (ms) como en segundos (s).
+* Tras iniciar la ejecución con el comando `make run` o `make test[n]` (correspondiente al archivo pruebas[n].txt), el programa imprimirá primero el tablero en su estado inicial intacto (solo si éste es válido), en caso contrario, se imprime un mensaje con el tipo de error en los vehiculos, como solapamiento, que se salgan del tablero los vehículos, o en el input.
 
 ### Glosario de Casos de Prueba
+* Cuando la simulación concluye, se concede un espacio antes de las correspondientes impresiones finales para garantizar que los cargadores empleados se "despidan" finalizando su ejecución asimismo; posteriorme se indicará que el vehículo 0 encontró su salida, para luego el sistema mostrar un resumen detallando el **tiempo total de ejecución**, expresado tanto en milisegundos (ms) como en segundos (s).
 
 #### Pruebas con Solución:
-Pruebas1: escenario de dependencia circular entre vehículos, baterias bajas mixtas, 2 cargadores.
+* **pruebas1.txt**: Escenario de dependencia circular entre vehículos, baterías bajas mixtas; 2 cargadores.
 
-Pruebas2: todas las baterias comienzan en 0, 1 cargador.
+* **pruebas2.txt**: Todas las baterías comienzan en 0; 1 cargador.
 
-Pruebas3: vehículo 0 inicia adelantado (columna 2) con batería 10, debe retroceder para poder despejar el camino de otros vehiculos que obstaculizan su salida e inician con 0 o poca bateria, 1 cargador.
+* **pruebas3.txt**: Vehículo 0 inicia "adelantado" (columna 2) con batería 10; debe retroceder para poder despejar el camino de otros vehículos que obstaculizan su salida e inician con 0 o poca batería; 1 cargador.
 
 #### Pruebas sin Solución o Tablero inválido:
-Pruebas4: tablero sin solución por bloqueo estático en la fila del vehículo objetivo por un vehículo horizontal que obstruye permanentemente su trayectoria de salida.
+* **pruebas4.txt**: Tablero sin solución por bloqueo estático en la fila del vehículo objetivo por un vehículo horizontal que obstruye permanentemente su trayectoria de salida.
 
-Pruebas5: tablero sin solución por bloqueo estático de vehículos verticales que ocupan toda una columna delante de la parte frontal del vehículo objetivo obstruyendo permanentemente su trayectoria de salida.
+* **pruebas5.txt**: Tablero sin solución por bloqueo estático de vehículos verticales que ocupan toda una columna por delante de la parte frontal del vehículo objetivo, obstruyendo permanentemente su trayectoria de salida.
 
-Pruebas6: Tablero sin solución por bloqueo persistente en la trayectoria de salida del vehículo 0, se excede el tiempo limite 10 min y finaliza la ejecución.
+* **pruebas6.txt**: Tablero sin solución por bloqueo persistente en la trayectoria de salida del vehículo 0; se excede el tiempo limite (10 min.) y finaliza la ejecución.
 
-Pruebas7: Tablero inválido, por dato invalido, un vehiculo se sale del tablero.
+**pruebas7.txt**: Tablero inválido, por dato inválido donde un vehículo se sale del tablero.
 
-Pruebas8: Tablero inválido, por solapamiento.
+* **pruebas8.txt**: Tablero inválido por solapamiento.
